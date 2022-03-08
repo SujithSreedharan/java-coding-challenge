@@ -2,6 +2,7 @@ package com.crewmeister.cmcodingchallenge.unit;
 
 import com.crewmeister.cmcodingchallenge.domain.ConversionRate;
 import com.crewmeister.cmcodingchallenge.domain.Currency;
+import com.crewmeister.cmcodingchallenge.exception.ParameterNotValidException;
 import com.crewmeister.cmcodingchallenge.repository.ConversionRateRepository;
 import com.crewmeister.cmcodingchallenge.response.HistoricalConvRateResponse;
 import com.crewmeister.cmcodingchallenge.service.HistoricalConRateService;
@@ -18,15 +19,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest
-public class HistroicalConRateServiceTest {
+public class HistoricalConRateServiceTest {
     @Mock
     private ConversionRateRepository conversionRateRepository;
 
     @InjectMocks // auto inject helloRepository
     private HistoricalConRateService conRateService;
+
 
     @BeforeEach
     void setMockOutput() {
@@ -43,12 +46,32 @@ public class HistroicalConRateServiceTest {
         conversionRate.setCurrency(currency);
         conversionRateList.add(conversionRate);
         when(conversionRateRepository.findAll()).thenReturn(conversionRateList);
+
+        final LocalDate queryDate = LocalDate.parse("2022-03-01");
+        when(this.conversionRateRepository.getConversionRateByActiveDate(queryDate)).thenReturn(conversionRateList);
+
     }
 
-    @DisplayName("Test getAllHistoricalData method")
+    @DisplayName("Test getAllHistoricalData api")
     @Test
-    void testGet() {
+    void getAllHistoricalDataTest() {
         HistoricalConvRateResponse convRateResponse = conRateService.getAllHistoricalData();
         assertEquals(1, convRateResponse.getData().size());
+    }
+
+    @DisplayName("Test getAllHistoricalData api")
+    @Test
+    void getConversionRecordForDate() {
+
+        HistoricalConvRateResponse convRateResponse = conRateService.getConversionRecordForDate("2022-03-01");
+        assertEquals(1, convRateResponse.getData().size());
+    }
+
+
+    @DisplayName("Test getAllHistoricalData api with invalidDate")
+    @Test
+    void getConversionRecordForInvalidDate() {
+        assertThrows(ParameterNotValidException.class,
+                () -> conRateService.getConversionRecordForDate("2022-Mar-01"));
     }
 }
